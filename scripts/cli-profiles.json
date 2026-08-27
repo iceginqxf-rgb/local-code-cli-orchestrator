@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "codex": {
+      "label": "OpenAI Codex CLI",
+      "aliases": ["openai-codex"],
+      "support": "ready",
+      "commands": ["codex"],
+      "command": ["{executable}"],
+      "base_args": ["exec", "--color", "never", "--output-last-message", "{result_file}"],
+      "prompt": {"transport": "stdin", "args": ["-"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["-c", "model_reasoning_effort=\"{effort}\""],
+      "version_args": ["--version"],
+      "homepage": "https://developers.openai.com/codex/cli/"
+    },
+    "claude": {
+      "label": "Claude Code",
+      "aliases": ["claude-code"],
+      "support": "ready",
+      "commands": ["claude"],
+      "command": ["{executable}"],
+      "base_args": ["--print", "--output-format", "text"],
+      "prompt": {"transport": "arg", "args": ["{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--effort", "{effort}"],
+      "version_args": ["--version"],
+      "homepage": "https://docs.anthropic.com/en/docs/claude-code/overview"
+    },
+    "copilot": {
+      "label": "GitHub Copilot CLI",
+      "aliases": ["github-copilot"],
+      "support": "ready",
+      "commands": ["copilot"],
+      "command": ["{executable}"],
+      "base_args": [],
+      "prompt": {"transport": "arg", "args": ["-p", "{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--effort", "{effort}"],
+      "version_args": ["--version"],
+      "homepage": "https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli"
+    },
+    "gh-copilot": {
+      "label": "GitHub Copilot CLI via gh",
+      "aliases": ["github-copilot-gh"],
+      "support": "ready",
+      "commands": ["gh"],
+      "detect_paths": ["~/.local/share/gh/copilot"],
+      "require_detect_path": true,
+      "command": ["{executable}", "copilot", "--"],
+      "base_args": [],
+      "prompt": {"transport": "arg", "args": ["-p", "{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--effort", "{effort}"],
+      "homepage": "https://cli.github.com/manual/gh_copilot"
+    },
+    "agy": {
+      "label": "Google Antigravity CLI",
+      "aliases": ["antigravity"],
+      "support": "ready",
+      "commands": ["agy"],
+      "command": ["{executable}"],
+      "base_args": ["--print", "--output-format", "text"],
+      "prompt": {"transport": "arg", "args": ["{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--effort", "{effort}"],
+      "version_args": ["--version"]
+    },
+    "grok": {
+      "label": "Grok Build CLI",
+      "aliases": ["grok-build"],
+      "support": "ready",
+      "commands": ["grok"],
+      "command": ["{executable}"],
+      "base_args": ["--output-format", "plain"],
+      "prompt": {"transport": "file", "args": ["--prompt-file", "{prompt_file}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--reasoning-effort", "{effort}"],
+      "version_args": ["--version"]
+    },
+    "droid": {
+      "label": "Factory Droid",
+      "aliases": ["factory-droid"],
+      "support": "ready",
+      "commands": ["droid"],
+      "command": ["{executable}"],
+      "base_args": ["exec", "--output-format", "text"],
+      "prompt": {"transport": "file", "args": ["--file", "{prompt_file}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--reasoning-effort", "{effort}"],
+      "version_args": ["--version"],
+      "homepage": "https://docs.factory.ai/cli/getting-started/overview"
+    },
+    "kimi": {
+      "label": "Kimi Code CLI",
+      "aliases": ["kimi-code", "kimi-cli"],
+      "support": "ready",
+      "commands": ["kimi", "kimi-cli"],
+      "command": ["{executable}"],
+      "base_args": ["--output-format", "text"],
+      "prompt": {"transport": "arg", "args": ["--prompt", "{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"],
+      "homepage": "https://moonshotai.github.io/kimi-code/"
+    },
+    "pi": {
+      "label": "Pi Coding Agent",
+      "aliases": ["pi-agent"],
+      "support": "ready",
+      "commands": ["pi"],
+      "command": ["{executable}"],
+      "base_args": ["--print"],
+      "prompt": {"transport": "arg", "args": ["{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--thinking", "{effort}"],
+      "version_args": ["--version"],
+      "homepage": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent"
+    },
+    "opencode": {
+      "label": "OpenCode",
+      "aliases": ["open-code"],
+      "support": "ready",
+      "commands": ["opencode"],
+      "command": ["{executable}"],
+      "base_args": ["run", "--format", "default"],
+      "prompt": {"transport": "arg", "args": ["{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": ["--variant", "{effort}"],
+      "version_args": ["--version"],
+      "homepage": "https://opencode.ai/docs/cli/"
+    },
+    "gemini": {
+      "label": "Google Gemini CLI",
+      "aliases": ["gemini-cli"],
+      "support": "ready",
+      "commands": ["gemini"],
+      "command": ["{executable}"],
+      "base_args": ["--output-format", "text"],
+      "prompt": {"transport": "arg", "args": ["--prompt", "{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"],
+      "homepage": "https://github.com/google-gemini/gemini-cli"
+    },
+    "qwen": {
+      "label": "Qwen Code",
+      "aliases": ["qwen-code"],
+      "support": "ready",
+      "commands": ["qwen", "qwen-code"],
+      "command": ["{executable}"],
+      "base_args": [],
+      "prompt": {"transport": "arg", "args": ["--prompt", "{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"],
+      "homepage": "https://github.com/QwenLM/qwen-code"
+    },
+    "aider": {
+      "label": "Aider",
+      "aliases": [],
+      "support": "ready",
+      "commands": ["aider"],
+      "command": ["{executable}"],
+      "base_args": ["--no-stream", "--no-auto-commits"],
+      "prompt": {"transport": "file", "args": ["--message-file", "{prompt_file}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"],
+      "homepage": "https://aider.chat/docs/scripting.html"
+    },
+    "goose": {
+      "label": "Goose CLI",
+      "aliases": [],
+      "support": "ready",
+      "commands": ["goose"],
+      "command": ["{executable}"],
+      "base_args": ["run", "--output-format", "text", "--quiet"],
+      "prompt": {"transport": "file", "args": ["--instructions", "{prompt_file}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"],
+      "homepage": "https://goose-docs.ai/docs/guides/goose-cli-commands/"
+    },
+    "kiro-cli": {
+      "label": "Kiro CLI",
+      "aliases": ["kiro"],
+      "support": "provisional",
+      "commands": ["kiro-cli"],
+      "command": ["{executable}"],
+      "base_args": ["chat", "--no-interactive"],
+      "prompt": {"transport": "arg", "args": ["{prompt}"]},
+      "model_args": ["--model", "{model}"],
+      "effort_args": [],
+      "version_args": ["--version"]
+    },
+    "cursor-agent": {
+      "label": "Cursor Agent CLI",
+      "aliases": [],
+      "support": "detect-only",
+      "commands": ["cursor-agent"],
+      "homepage": "https://cursor.com/cli"
+    },
+    "cursor": {
+      "label": "Cursor editor launcher",
+      "aliases": ["cursor-cli"],
+      "support": "detect-only",
+      "commands": ["cursor"],
+      "note": "May open the editor and is not treated as a background-safe code agent."
+    },
+    "amp": {
+      "label": "Amp CLI",
+      "aliases": ["ampcode"],
+      "support": "detect-only",
+      "commands": ["amp"],
+      "homepage": "https://ampcode.com/manual"
+    },
+    "crush": {
+      "label": "Crush",
+      "aliases": [],
+      "support": "detect-only",
+      "commands": ["crush"],
+      "homepage": "https://github.com/charmbracelet/crush"
+    },
+    "cline": {
+      "label": "Cline CLI",
+      "aliases": [],
+      "support": "detect-only",
+      "commands": ["cline"]
+    },
+    "roo": {
+      "label": "Roo Code CLI",
+      "aliases": ["roo-code"],
+      "support": "detect-only",
+      "commands": ["roo"]
+    },
+    "auggie": {
+      "label": "Augment Code CLI",
+      "aliases": ["augment"],
+      "support": "detect-only",
+      "commands": ["auggie"]
+    }
+  }
+}

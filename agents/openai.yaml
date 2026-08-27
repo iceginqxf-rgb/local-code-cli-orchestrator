@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Code CLI Orchestrator"
+  short_description: "Delegate local code CLIs through durable reviewable sessions"
+  default_prompt: "Use $local-code-cli-orchestrator to delegate this coding task to an installed local Code CLI and independently review its result."

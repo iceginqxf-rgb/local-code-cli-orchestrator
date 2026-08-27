@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a reproducible runner, adapter, or review-boundary problem
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials or proprietary session logs. Report vulnerabilities through GitHub Security Advisories.
+  - type: input
+    id: version
+    attributes:
+      label: Orchestrator revision
+      description: Commit SHA or release tag.
+    validations:
+      required: true
+  - type: input
+    id: cli
+    attributes:
+      label: Code CLI and version
+      description: Exact product and version, if the issue is adapter-specific.
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - background
+        - foreground
+        - tmux
+        - PR review/checkpoint
+        - scan/profile detection
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal safe steps using a disposable repository when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
