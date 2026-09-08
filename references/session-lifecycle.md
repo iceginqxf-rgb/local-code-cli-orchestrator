@@ -1,6 +1,6 @@
 # Durable session lifecycle
 
-Resolve `<skill-dir>` to the skill's installed directory, then use the unified runner:
+Use the unified runner:
 
 ```bash
 python3 <skill-dir>/scripts/code-cli-session.py <command>
@@ -80,9 +80,20 @@ The default timeout is 7,200 seconds. Set a different bounded timeout when the t
 
 The runner refuses a second active session in the same Git worktree. Prefer a separate worktree for parallel implementation. Use `--allow-concurrent` only when overlapping access is deliberate and safe.
 
-After launch, return the session ID and session directory. Do not keep the turn open by continuously tailing or polling.
+After launch, return the session ID and session directory. Do not keep the turn open by continuously tailing logs or making repeated model-driven status calls.
 
-## 4. Check once, then review
+When a Codex Lead needs same-turn completion notification for a bounded run, read [codex-provider-routing.md](codex-provider-routing.md). One cheap monitor subagent may invoke the deterministic waiter exactly once:
+
+```bash
+python3 <skill-dir>/scripts/code-cli-session.py \
+  wait --session task-droid-01 --timeout 7200 --json
+```
+
+`wait` silently reads the atomically updated local `status.json`; it does not stream output or consume repeated model turns. It exits zero after observing any terminal state, even when the implementation failed, timed out, was cancelled, or became stale. A wait-bound expiry exits 6 and returns the still-current state with `wait_timed_out: true`. The implementation remains durable and can be checked later.
+
+This exception applies only to the local implementation process. Never use `wait`, a monitor subagent, or the external CLI to watch remote PR CI. If the active Codex turn or monitor may not survive the expected run, skip the waiter and use a later one-shot status/review or a host event/heartbeat.
+
+## 4. Wait once or check once, then review
 
 Read status when review is requested or when a later workflow resumes:
 

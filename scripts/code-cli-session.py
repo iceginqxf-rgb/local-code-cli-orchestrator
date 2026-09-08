@@ -2,7 +2,9 @@
 """Durable, background-first orchestration for local coding CLIs.
 
 The runner intentionally does not install CLIs, grant unsafe permissions, or
-continuously monitor work. It creates an auditable session and returns.
+stream progress. It creates an auditable session and returns. Its ``wait``
+command can block silently on one exact session so a cheap monitor agent does
+not need to spend model turns polling.
 """
 
 from __future__ import annotations
@@ -10,6 +12,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -1155,7 +1158,7 @@ def command_start(args: argparse.Namespace) -> int:
                 f"Attach only if live observation is needed: tmux attach -t {tmux_name}"
             )
         print(
-            "No continuous monitoring is required. Check status once when review is requested."
+            "Check status once later, or use one bounded `wait` call when a caller needs completion notification."
         )
     return 0
 
@@ -1244,6 +1247,71 @@ def command_status(args: argparse.Namespace) -> int:
             print(f"Review: {payload['review_file']}")
             print(f"Lead checkpoint: {payload['lead_review_file']}")
     return 0 if payload["state"] != "stale" else 4
+
+
+def command_wait(args: argparse.Namespace) -> int:
+    """Wait silently for one session to reach any terminal state.
+
+    A terminal implementation failure is still a successful wait operation, so
+    terminal states return zero and callers must inspect ``state``. Exit code 6
+    means only that this wait invocation reached its own bound first.
+    """
+
+    if not math.isfinite(args.timeout) or args.timeout < 0:
+        raise OrchestratorError(
+            "Wait timeout must be zero or a finite positive number", 2
+        )
+    if not math.isfinite(args.interval) or not 0.1 <= args.interval <= 60:
+        raise OrchestratorError(
+            "Wait interval must be between 0.1 and 60 seconds", 2
+        )
+
+    state_root = Path(args.state_root).expanduser().resolve()
+    directory, metadata, status = load_session(state_root, args.session)
+    started = time.monotonic()
+    deadline = started + args.timeout if args.timeout else None
+
+    while True:
+        payload = status_payload(directory, metadata, status)
+        state = payload["state"]
+        elapsed = time.monotonic() - started
+        if state in TERMINAL_STATES:
+            payload["wait_timed_out"] = False
+            payload["waited_seconds"] = round(elapsed, 3)
+            break
+
+        if deadline is not None and time.monotonic() >= deadline:
+            payload["wait_timed_out"] = True
+            payload["wait_timeout_seconds"] = args.timeout
+            payload["waited_seconds"] = round(elapsed, 3)
+            if args.json:
+                print(json.dumps(payload, ensure_ascii=False, indent=2))
+            else:
+                print(f"Session: {payload['session_id']}")
+                print(f"State: {state}")
+                print(f"Wait timed out after: {payload['waited_seconds']}s")
+                print(f"Result: {payload['result_file']}")
+                print(f"Log: {payload['execution_log']}")
+            return 6
+
+        sleep_seconds = args.interval
+        if deadline is not None:
+            sleep_seconds = min(sleep_seconds, max(0.0, deadline - time.monotonic()))
+        if sleep_seconds:
+            time.sleep(sleep_seconds)
+        status = read_json(directory / "status.json")
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"Session: {payload['session_id']}")
+        print(f"State: {payload['state']}")
+        if payload.get("exit_code") is not None:
+            print(f"Implementation exit code: {payload['exit_code']}")
+        print(f"Waited: {payload['waited_seconds']}s")
+        print(f"Result: {payload['result_file']}")
+        print(f"Log: {payload['execution_log']}")
+    return 0
 
 
 def command_list(args: argparse.Namespace) -> int:
@@ -1670,7 +1738,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(
         dest="command_name",
         required=True,
-        metavar="{scan,start,status,list,review,checkpoint,logs,stop}",
+        metavar="{scan,start,status,wait,list,review,checkpoint,logs,stop}",
     )
 
     scan = sub.add_parser(
@@ -1745,6 +1813,26 @@ def build_parser() -> argparse.ArgumentParser:
     status.add_argument("--session", required=True)
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=command_status)
+
+    wait = sub.add_parser(
+        "wait",
+        help="block silently until one session is terminal or the wait bound expires",
+    )
+    wait.add_argument("--session", required=True)
+    wait.add_argument(
+        "--timeout",
+        type=float,
+        default=7200,
+        help="maximum seconds to wait; 0 disables the wait bound (default: 7200)",
+    )
+    wait.add_argument(
+        "--interval",
+        type=float,
+        default=2.0,
+        help="internal status-file check interval in seconds (default: 2.0)",
+    )
+    wait.add_argument("--json", action="store_true")
+    wait.set_defaults(func=command_wait)
 
     listing = sub.add_parser("list", help="list recent durable sessions")
     listing.add_argument("--cwd")

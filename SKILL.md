@@ -1,13 +1,13 @@
 ---
 name: local-code-cli-orchestrator
-description: Delegate coding work to installed terminal code agents through durable background sessions, logs, results, and independent Lead Agent review. Use when an agent should run or supervise another local coding CLI, including PR-only GitHub delivery; use tmux only when live observation is explicitly useful.
+description: Delegate coding work to local terminal code agents through durable background sessions, token-efficient completion notification, logs, results, and independent Lead Agent review. Use when Codex should run or supervise another installed coding CLI or alternate-provider model, including PR-only implementation in an AI-native GitHub delivery loop; use tmux only when live observation is explicitly useful.
 metadata:
-  short-description: Run local code CLIs as reviewable background sessions
+  short-description: Run code CLIs with cheap completion monitoring
 ---
 
 # Local Code CLI Orchestrator
 
-Delegate implementation to an installed local coding CLI while the Lead Agent owns task framing and independent acceptance. Default to a detached, non-interactive run that leaves a durable session; do not continuously monitor it.
+Delegate implementation to an installed local coding CLI while Codex owns task framing and independent acceptance. Default to a detached, non-interactive run that leaves a durable session. When Codex needs an in-turn completion signal, prefer the custom `monitor_luna` role plus the runner's deterministic `wait` command; never spend Lead-model turns polling.
 
 ## Invariants
 
@@ -21,6 +21,18 @@ Delegate implementation to an installed local coding CLI while the Lead Agent ow
 - Treat CLI output as evidence, not acceptance. Inspect the actual diff and run project checks independently.
 - In GitHub delivery mode, the external Code CLI may create or update the feature PR but never merge it, push the default branch, close the Delivery Issue, clean its worktree, or claim Engineering Done/Accepted/Released.
 - Preserve existing user changes and stop if the CLI works in the wrong directory.
+
+## Codex alternate-provider routing
+
+When the Lead Agent is Codex and another provider or cheaper model should do the implementation, read [references/codex-provider-routing.md](references/codex-provider-routing.md) before dispatch. Choose by expected lifecycle, not only by nominal priority:
+
+1. For bounded work that should return to the same active turn, prefer an external Code CLI plus the custom `monitor_luna` role. That role is pinned to `gpt-5.6-luna`, low effort, and read-only access. Spawn it without inherited conversation turns; it runs one silent `wait` command and reports the terminal payload. Sol waits natively, then performs the review. This is the default Codex path and does not require a Luna initialization turn.
+2. For long, interruptible, or cross-session work, launch the durable Code CLI and return. Resume from one later `status`/`review` check or a host heartbeat/automation. This is less immediate but more resilient than keeping a turn alive.
+3. Do not make Sol repeatedly call `status` or tail logs. One immediate diagnostic check is fine; model-driven polling is the last-resort path.
+
+Native cross-provider role dispatch is unavailable in the verified Codex 0.153.4 implementation: V1 and V2 share role handling that preserves the parent provider. Do not configure an external provider on native `worker` / `explorer`, recommend disabling V2, or use Luna initialization as a workaround. Keep native Codex roles on OpenAI; use an explicitly selected external CLI for another provider without changing the Lead's global provider configuration. `monitor_luna` remains a same-provider completion notifier. See the routing reference for evidence and revalidation criteria.
+
+These priorities reverse for work expected to outlive the active turn: durable launch and later review becomes the first choice. Never use a local process waiter to watch remote PR CI; take one CI snapshot and resume from an event or later check.
 
 ## Choose a mode
 
@@ -38,15 +50,24 @@ python3 <skill-dir>/scripts/code-cli-session.py \
   --session <stable-session-id>
 ```
 
-`start` defaults to background mode and returns immediately. Do not tail or poll after a successful launch. Record the session ID for a later status check and review.
+`start` defaults to background mode and returns immediately. Do not tail logs or perform model-driven polling after launch. Either record the session ID for a later review, or—only for bounded same-turn work—spawn `monitor_luna` with no inherited conversation turns and give it exactly one deterministic waiter process:
+
+```bash
+python3 <skill-dir>/scripts/code-cli-session.py \
+  wait --session <session-id> --timeout <bounded-seconds> --json
+```
+
+The `wait` command emits no progress while active. It returns zero after observing any terminal implementation state, including failure; inspect the returned `state` and never confuse successful notification with successful implementation.
+
+If `monitor_luna` is unavailable in another Codex installation, fall back to a `default` subagent with explicit `gpt-5.6-luna` and low effort. Never silently use the Sol Lead as the watcher.
 
 Use `--mode tmux` only when the user asks to watch live execution or detached background processes are not durable on that host. Use `--mode foreground` only for adapter debugging or short deliberate runs.
 
 For full commands, artifact layout, timeouts, cancellation, and lifecycle rules, read [references/session-lifecycle.md](references/session-lifecycle.md) before launching or reviewing a session.
 
-## GitHub PR delivery
+## AI-native GitHub delivery
 
-For a Delivery Issue, read [references/ai-native-delivery.md](references/ai-native-delivery.md) before dispatch. Treat the repository's own contribution guide and workflow profile as authoritative when they define stricter or project-specific gates.
+For a Delivery Issue, follow the project's contribution guide and workflow profile; load `ai-native-build` when that skill is installed and applicable. Read [references/ai-native-delivery.md](references/ai-native-delivery.md) before dispatch.
 
 The Lead Agent creates or selects the exact Issue branch and linked worktree, then launches with `--delivery-mode pr` plus the Issue, base branch, feature branch, change types, and affected modules. The runner rejects the base branch and, absent an explicit project-profile exception, the main worktree. It appends a mandatory PR-only/non-merge boundary to the effective prompt.
 
@@ -80,7 +101,7 @@ Do not put credentials in prompts or arguments. Session logs may contain proprie
 
 ## Review checkpoint
 
-When review is requested, check status once:
+When review is requested, use the terminal payload from `wait` or check status once:
 
 ```bash
 python3 <skill-dir>/scripts/code-cli-session.py \
