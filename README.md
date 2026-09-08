@@ -27,6 +27,10 @@ Lead Agent
   -> changes_requested | awaiting_ci | blocked | merge_ready
 ```
 
+## Codex provider routing
+
+Native child roles cannot switch provider in the verified Codex 0.153.4 implementation; V1 and V2 share this restriction. Use an explicitly selected external Code CLI for alternate-provider work. Bounded same-turn runs may use one same-provider Luna completion monitor with the runner's `wait` command; longer work should use a durable launch and later review. See [routing and compatibility evidence](references/codex-provider-routing.md).
+
 ## Supported CLIs
 
 The built-in registry currently includes:
